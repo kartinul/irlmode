@@ -66,7 +66,7 @@ function oneExit(props: Prop[]): Prop[] {
 const MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent"
 
 const PROMPT = `This photo becomes a 2D platformer level; its real objects are the terrain.
-List EVERY distinct visible object, big or small (furniture, screens, bags, bottles, people, chairs, lights, doors, windows...), and reply with JSON only:
+List EVERY distinct visible object, big or small (furniture, screens, bags, bottles, people, chairs, lights, doors, windows...), and reply with ONE JSON object (not an array), JSON only:
 {"name": "<simple title in lowercase>", "props": [{"label": "<plain words>", "role": "platform|hazard|coin|bouncy|wind|exit|decor", "box_2d": [y0, x0, y1, x1], "outline": [[y, x], ...], "layer": <int>, "surface": [[y, x], [y, x]], "wind": "left|right|up|down"}]}
 Coords are integers 0..1000, origin top-left, y before x. box_2d is the tight box around the whole object.
 outline is a polygon of 8 to 16 points tracing the object's visible silhouette, clockwise.
@@ -97,8 +97,15 @@ export async function readLevel(jpegBytes: ArrayBuffer): Promise<Level> {
   return parseLevel(candidates[0].content.parts.filter((part) => !part.thought).map((part) => part.text).join(""))
 }
 
+// Gemma sometimes replies with an array of one-prop Levels, labelling each Prop by its Role and putting the real Label in "name"
+function unwrap(item: Record<string, unknown>): Record<string, unknown>[] {
+  if (!Array.isArray(item?.props)) return [item]
+  return item.props.map((prop) => ({ ...prop, label: prop.label && prop.label !== prop.role ? prop.label : item.name }))
+}
+
 export function parseLevel(reply: string): Level {
-  const level = JSON.parse(reply.slice(reply.indexOf("{"), reply.lastIndexOf("}") + 1))
+  const json = JSON.parse(reply.slice(reply.search(/[[{]/), Math.max(reply.lastIndexOf("}"), reply.lastIndexOf("]")) + 1))
+  const level = Array.isArray(json) ? { props: json.flatMap(unwrap) } : json
   const props = (Array.isArray(level.props) ? (level.props as Record<string, unknown>[]) : [])
     .map((prop) => toProp({ ...prop, box: boxFrom(prop.box_2d), surface: pointsFrom(prop.surface), outline: pointsFrom(prop.outline) }))
     .filter((prop) => prop !== null)

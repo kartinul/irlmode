@@ -86,3 +86,10 @@ test("decor Props are kept, and junk outlines fall back to the Box", () => {
     { role: "decor", layer: 5, outline: [[0.8, 0], [1, 0], [1, 1], [0.8, 1]] },
   )
 })
+
+test("an array of one-prop Levels is flattened into one Level", () => {
+  const reply = '```json\n[{"name":"desk","props":[{"label":"platform","role":"platform","box_2d":[400,0,1000,800],"layer":1}]},{"name":"jug","props":[{"label":"big jug","role":"exit","box_2d":[300,200,400,300],"layer":0}]}]\n```'
+  const level = parseLevel(reply)
+  expect(level.name).toBe("Untitled Level")
+  expect(roles(level.props)).toEqual(["desk:platform", "big jug:exit"])
+})
