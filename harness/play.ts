@@ -1,9 +1,10 @@
 import { chromium } from "playwright"
+import type {} from "../public/main.ts"
 
 const port = 3077
 const fixture = process.argv[2] ?? "desk"
 const shots = new URL("./shots/", import.meta.url).pathname
-const server = Bun.spawn(["bun", "server.js"], { env: { ...process.env, PORT: String(port) }, stdout: "ignore" })
+const server = Bun.spawn(["bun", "server.ts"], { env: { ...process.env, PORT: String(port) }, stdout: "ignore" })
 const browser = await chromium.launch()
 
 try {
@@ -13,14 +14,14 @@ try {
   await page.goto(`http://localhost:${port}/?fixture=${fixture}`)
   await page.waitForFunction(() => window.game)
 
-  const state = () => page.evaluate(() => window.game.state)
-  const until = (check, arg) =>
+  const state = () => page.evaluate(() => window.game!.state)
+  const until = (check: (arg: number) => boolean, arg = 0) =>
     page.waitForFunction(check, arg, { timeout: 6000, polling: 16 }).catch(async e => {
       const { level, ...rest } = await state()
       throw new Error(`stuck at ${JSON.stringify(rest)}`, { cause: e })
     })
   const jump = () => page.keyboard.press("Space")
-  const shot = name => page.screenshot({ path: `${shots}${fixture}-${name}.png` })
+  const shot = (name: string) => page.screenshot({ path: `${shots}${fixture}-${name}.png` })
 
   await page.waitForTimeout(200)
   await shot("spawn")
@@ -29,20 +30,20 @@ try {
   await jump()
   await page.waitForTimeout(350)
   await jump()
-  await until(() => window.game.state.grounded && window.game.state.runner.y < 0.9)
+  await until(() => window.game!.state.grounded && window.game!.state.runner.y < 0.9)
   await page.keyboard.up("ArrowRight")
   await shot("mid-climb")
 
-  const exit = (await state()).level.props.find(p => p.role === "exit").box
+  const exit = (await state()).level.props.find(p => p.role === "exit")!.box
   const exitX = (exit[0] + exit[2]) / 2
   const key = (await state()).runner.x < exitX ? "ArrowRight" : "ArrowLeft"
   await page.keyboard.down(key)
-  await until(x => window.game.state.won || Math.abs(window.game.state.runner.x - x) < 0.01, exitX)
+  await until((x: number) => window.game!.state.won || Math.abs(window.game!.state.runner.x - x) < 0.01, exitX)
   await page.keyboard.up(key)
   await jump()
   await page.waitForTimeout(350)
   if (!(await state()).won) await jump()
-  await until(() => window.game.state.won)
+  await until(() => window.game!.state.won)
   await shot("win")
   console.log("won", await state().then(s => s.runner))
 } finally {

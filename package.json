@@ -2,11 +2,14 @@
   "name": "irl-mode",
   "type": "module",
   "scripts": {
-    "start": "bun server.js",
+    "start": "bun server.ts",
     "test": "bun test src test harness",
-    "play": "bun harness/play.js"
+    "typecheck": "tsc",
+    "play": "bun harness/play.ts"
   },
   "devDependencies": {
-    "playwright": "1.63.0"
+    "@types/bun": "^1.4.4",
+    "playwright": "1.63.0",
+    "typescript": "^7.0.2"
   }
 }

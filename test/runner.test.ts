@@ -1,9 +1,10 @@
 import { expect, test } from "bun:test"
-import { spawn, step } from "../public/runner.js"
+import type { Level, Point } from "../src/types.ts"
+import { spawn, step, type Input, type Runner } from "../public/runner.ts"
 
 const aspect = 2
-const empty = { name: "empty", props: [] }
-const run = (runner, level, frames, input = {}) => {
+const empty: Level = { name: "empty", props: [] }
+const run = (runner: Runner, level: Level, frames: number, input: Input = {}) => {
   for (let i = 0; i < frames; i++) runner = step(runner, i === 0 ? input : { ...input, jump: false }, level, aspect)
   return runner
 }
@@ -14,7 +15,7 @@ test("bottom of the Snap is the floor", () => {
   expect(runner.grounded).toBe(true)
 })
 
-const shelf = surface => ({ name: "shelf", props: [{ label: "shelf", role: "platform", box: [0, 0, 1, 1], layer: 0, surface }] })
+const shelf = (surface: [Point, Point]): Level => ({ name: "shelf", props: [{ label: "shelf", role: "platform", box: [0, 0, 1, 1], layer: 0, surface }] })
 
 test("Surfaces are one-way: jump up through from below, land on top", () => {
   const level = shelf([[0, 0.8], [1, 0.8]])
@@ -46,7 +47,7 @@ test("double jump is always available, triple is not", () => {
 })
 
 test("touching the exit wins and freezes the Runner", () => {
-  const level = { name: "exit", props: [{ label: "jug", role: "exit", box: [0.2, 0.9, 0.3, 1], layer: 0 }] }
+  const level: Level = { name: "exit", props: [{ label: "jug", role: "exit", box: [0.2, 0.9, 0.3, 1], layer: 0 }] }
   const runner = run(spawn(aspect), level, 60, { right: true })
   expect(runner.won).toBe(true)
   expect(step(runner, { right: true }, level, aspect)).toBe(runner)

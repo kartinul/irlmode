@@ -11,13 +11,6 @@
 </head>
 <body>
   <canvas id="game"></canvas>
-  <script type="module">
-    import { startGame } from "./game.js"
-    const fixture = new URLSearchParams(location.search).get("fixture")
-    if (fixture) {
-      const level = await (await fetch(`/fixtures/${fixture}.level.json`)).json()
-      window.game = await startGame(document.getElementById("game"), `/fixtures/${fixture}.jpg`, level)
-    }
-  </script>
+  <script type="module" src="./main.ts"></script>
 </body>
 </html>
