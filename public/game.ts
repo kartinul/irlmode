@@ -1,9 +1,10 @@
-import type { Level, Point } from "../src/types.ts"
+import type { Level, Point, Role } from "../src/types.ts"
 import { SIZE, spawn, step, type Input } from "./runner.ts"
 
 const DT = 1 / 60
 const KEYS: Record<string, "left" | "right"> = { ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right" }
 const JUMP_KEYS = ["Space", "ArrowUp", "KeyW"]
+const ROLE_COLORS: Record<Role, string> = { platform: "#ffe14d", exit: "#3dff7a", hazard: "#ff4040", coin: "#ffb000", bouncy: "#c77dff", wind: "#5ecbff" }
 
 export type GameState = { runner: { x: number; y: number }; grounded: boolean; won: boolean; level: Level }
 
@@ -37,7 +38,7 @@ export async function startGame(canvas: HTMLCanvasElement, snapUrl: string, leve
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.drawImage(snap, fit.x, fit.y, fit.w, fit.h)
     ctx.lineWidth = 3
-    ctx.strokeStyle = "#ffe14d"
+    ctx.strokeStyle = ROLE_COLORS.platform
     for (const { surface } of level.props) {
       if (!surface) continue
       ctx.beginPath()
@@ -45,8 +46,14 @@ export async function startGame(canvas: HTMLCanvasElement, snapUrl: string, leve
       ctx.lineTo(...px(...surface[1]))
       ctx.stroke()
     }
-    ctx.strokeStyle = "#3dff7a"
-    for (const { box } of level.props.filter(p => p.role === "exit")) ctx.strokeRect(...px(box[0], box[1]), (box[2] - box[0]) * fit.w, (box[3] - box[1]) * fit.h)
+    ctx.font = `${fit.h / 40}px system-ui`
+    ctx.textAlign = "left"
+    for (const { box, role, label } of level.props.filter(p => p.role !== "platform")) {
+      const [x, y] = px(box[0], box[1])
+      ctx.strokeStyle = ctx.fillStyle = ROLE_COLORS[role]
+      ctx.strokeRect(x, y, (box[2] - box[0]) * fit.w, (box[3] - box[1]) * fit.h)
+      ctx.fillText(`${role}: ${label}`, x + 4, y + fit.h / 40)
+    }
     const [w, h] = [(SIZE.w / aspect) * fit.w, SIZE.h * fit.h]
     const [rx, ry] = px(runner.x, runner.y)
     ctx.fillStyle = "#ff3d6e"

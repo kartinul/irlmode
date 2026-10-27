@@ -3,6 +3,7 @@
   "type": "module",
   "scripts": {
     "start": "bun server.ts",
+    "dev": "bun --hot server.ts",
     "test": "bun test src test harness",
     "typecheck": "tsc",
     "play": "bun harness/play.ts",
