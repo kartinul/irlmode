@@ -1,0 +1,8 @@
+{
+  "name": "irl-mode",
+  "type": "module",
+  "scripts": {
+    "start": "bun server.js",
+    "test": "bun test"
+  }
+}
