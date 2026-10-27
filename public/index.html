@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IRL Mode</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <script type="module">
+    import { startGame } from "./game.js"
+    const fixture = new URLSearchParams(location.search).get("fixture")
+    if (fixture) {
+      const level = await (await fetch(`/fixtures/${fixture}.level.json`)).json()
+      window.game = await startGame(document.getElementById("game"), `/fixtures/${fixture}.jpg`, level)
+    }
+  </script>
+</body>
+</html>
