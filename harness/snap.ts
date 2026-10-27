@@ -15,11 +15,12 @@ try {
   page.on("pageerror", e => console.error(e))
   const shot = (name: string) => page.screenshot({ path: `${shots}snap-${name}.png` })
 
-  await page.route("**/level", route => route.fulfill({ status: 502, json: { error: "harness: Gemma down" } }))
+  await page.route(/\/level\?/, route => route.fulfill({ status: 502, json: { error: "harness: Gemma down" } }))
   await page.goto(`http://localhost:${port}/`)
+  await page.click('[data-snap="desk"]')
   await page.locator("#retry").waitFor()
   await shot("error")
-  await page.unroute("**/level")
+  await page.unroute(/\/level\?/)
 
   const started = Date.now()
   await page.click("#retry")
