@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "start": "bun server.js",
-    "test": "bun test test/",
+    "test": "bun test src test harness",
     "play": "bun harness/play.js"
   },
   "devDependencies": {

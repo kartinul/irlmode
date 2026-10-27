@@ -1,6 +1,6 @@
 export const SIZE = { w: 0.035, h: 0.07 }
 const GRAVITY = 3
-const JUMP_SPEED = 1.35
+const JUMP_SPEED = 1.5
 const RUN_SPEED = 0.7
 const MAX_JUMPS = 2
 const STICK = 0.02
