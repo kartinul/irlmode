@@ -11,9 +11,10 @@ function toBox(box) {
   return x1 > x0 && y1 > y0 ? [x0, y0, x1, y1] : null;
 }
 
-function toSurface(surface, [x0, y0, x1]) {
+function toSurface(surface, [x0, y0, x1, y1]) {
   const points = Array.isArray(surface) && surface.length === 2 && surface.flat().length === 4 && surface.flat().every(Number.isFinite);
-  if (!points) return [[x0, y0], [x1, y0]];
+  const nearTop = points && surface.every(([, y]) => y <= y0 + (y1 - y0) / 4);
+  if (!nearTop) return [[x0, y0], [x1, y0]];
   const [a, b] = surface.map((point) => point.map(clamp));
   return a[0] <= b[0] ? [a, b] : [b, a];
 }
@@ -26,6 +27,10 @@ function toProp({ label, role, box, layer, surface, wind }) {
   if (role === "wind") prop.wind = WINDS.includes(wind) ? wind : "down";
   return prop;
 }
+
+const yxToXy = (v) => (Array.isArray(v) && v.every((n) => typeof n === "number") ? v.map((n) => n / 1000) : v);
+const boxFrom = (box) => { const b = yxToXy(box); return Array.isArray(b) && b.length === 4 ? [b[1], b[0], b[3], b[2]] : b; };
+const surfaceFrom = (surface) => (Array.isArray(surface) ? surface.map((point) => { const p = yxToXy(point); return Array.isArray(p) ? p.toReversed() : p; }) : surface);
 
 const withRole = (prop, role) => toProp({ ...prop, role });
 
@@ -43,10 +48,11 @@ const MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma
 
 const PROMPT = `This photo becomes a 2D platformer level; its real objects are the terrain.
 Find the main objects and reply with JSON only:
-{"name": "<funny level title>", "props": [{"label": "<plain words>", "role": "platform|hazard|coin|bouncy|wind|exit", "box": [x0, y0, x1, y1], "layer": <int, higher = nearer camera>, "surface": [[x, y], [x, y]], "wind": "left|right|up|down"}]}
-Coords are fractions of the image (0..1, origin top-left). box is the tight box around the whole object.
-surface (platforms only) is the real top edge you could stand on, left point then right point; it may slant.
-wind only for wind props. Exactly one exit. Use big flat things as platforms.`;
+{"name": "<funny level title>", "props": [{"label": "<plain words>", "role": "platform|hazard|coin|bouncy|wind|exit", "box_2d": [y0, x0, y1, x1], "layer": <int, higher = nearer camera>, "surface": [[y, x], [y, x]], "wind": "left|right|up|down"}]}
+Coords are integers 0..1000, origin top-left, y before x. box_2d is the tight box around the whole object.
+surface (platforms only) is the edge a tiny figure would stand on: the front edge of the object's top face as seen in the photo, left point then right point; it may slant.
+wind only for wind props. Exactly one exit. Use big flat things as platforms.
+Include small objects too (mouse, cups, bags): make them coins or hazards.`;
 
 export async function readLevel(jpegBytes) {
   const body = {
@@ -68,6 +74,8 @@ export async function readLevel(jpegBytes) {
 
 export function parseLevel(reply) {
   const level = JSON.parse(reply.slice(reply.indexOf("{"), reply.lastIndexOf("}") + 1));
-  const props = (Array.isArray(level.props) ? level.props : []).map(toProp).filter(Boolean);
+  const props = (Array.isArray(level.props) ? level.props : [])
+    .map((prop) => toProp({ ...prop, box: boxFrom(prop.box_2d), surface: surfaceFrom(prop.surface) }))
+    .filter(Boolean);
   return { name: String(level.name ?? "Untitled Level"), props: oneExit(props) };
 }

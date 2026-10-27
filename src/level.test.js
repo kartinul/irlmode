@@ -1,19 +1,26 @@
 import { expect, test } from "bun:test";
 import { parseLevel } from "./level.js";
 
+const toYx = (point) => point.map((n) => Math.round(n * 1000)).toReversed();
+const raw = ({ box, surface, ...prop }) => ({
+  ...prop,
+  box_2d: Array.isArray(box) ? [box[1], box[0], box[3], box[2]].map((n) => Math.round(n * 1000)) : box,
+  ...(surface && { surface: surface.map(toYx) }),
+});
+
 test("parses a fenced reply into a Level", () => {
-  const reply = '```json\n{"name":"Desk","props":[{"label":"desk","role":"platform","box":[0,0.4,0.8,1],"layer":1,"surface":[[0,0.42],[0.8,0.6]]},{"label":"jug","role":"exit","box":[0.2,0.3,0.3,0.4],"layer":0}]}\n```';
+  const reply = '```json\n{"name":"Desk","props":[{"label":"desk","role":"platform","box_2d":[400,0,1000,800],"layer":1,"surface":[[420,0],[500,800]]},{"label":"jug","role":"exit","box_2d":[300,200,400,300],"layer":0}]}\n```';
   expect(parseLevel(reply)).toEqual({
     name: "Desk",
     props: [
-      { label: "desk", role: "platform", box: [0, 0.4, 0.8, 1], layer: 1, surface: [[0, 0.42], [0.8, 0.6]] },
+      { label: "desk", role: "platform", box: [0, 0.4, 0.8, 1], layer: 1, surface: [[0, 0.42], [0.8, 0.5]] },
       { label: "jug", role: "exit", box: [0.2, 0.3, 0.3, 0.4], layer: 0 },
     ],
   });
 });
 
 const exit = { label: "jug", role: "exit", box: [0.2, 0.3, 0.3, 0.4], layer: 0 };
-const level = (...props) => JSON.stringify({ name: "L", props: [...props, exit] });
+const level = (...props) => JSON.stringify({ name: "L", props: [...props, exit].map(raw) });
 
 test("drops Props with junk Roles or unusable Boxes", () => {
   const reply = level(
@@ -56,8 +63,15 @@ test("with no exit, the highest platform is promoted", () => {
   const reply = JSON.stringify({ name: "L", props: [
     { label: "desk", role: "platform", box: [0, 0.5, 1, 1], layer: 1, surface: [[0, 0.5], [1, 0.6]] },
     { label: "shelf", role: "platform", box: [0.1, 0.2, 0.3, 0.4], layer: 0 },
-  ] });
+  ].map(raw) });
   const { props } = parseLevel(reply);
   expect(roles(props)).toEqual(["desk:platform", "shelf:exit"]);
   expect(props[1].surface).toBeUndefined();
+});
+
+test("a Surface far below its Box top falls back to the Box top", () => {
+  const reply = level(
+    { label: "monitor", role: "platform", box: [0.3, 0.2, 0.6, 0.8], layer: 1, surface: [[0.3, 0.2], [0.6, 0.8]] },
+  );
+  expect(parseLevel(reply).props[0].surface).toEqual([[0.3, 0.2], [0.6, 0.2]]);
 });
