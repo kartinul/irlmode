@@ -5,12 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>IRL Mode</title>
   <style>
-    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: #fff; font-family: system-ui, sans-serif; }
     canvas { display: block; width: 100vw; height: 100vh; }
+    .card { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 1rem; text-align: center; background: #000c; }
+    .card[hidden] { display: none; }
+    h1 { margin: 0; font-size: clamp(2rem, 7vw, 4.5rem); }
+    p { margin: 0; font-size: 1.2rem; }
+    button { font: inherit; font-size: 1.3rem; font-weight: bold; padding: 0.8rem 1.6rem; border: 0; border-radius: 999px; background: #ffe14d; color: #000; cursor: pointer; }
+    #title { background: #0008; pointer-events: none; transition: opacity 0.6s; }
+    #loading p::after { content: ""; animation: dots 1.2s steps(4) infinite; }
+    @keyframes dots { 25% { content: "." } 50% { content: ".." } 75% { content: "..." } }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
+  <div id="loading" class="card"><p>Reading your Snap (can take 20 s)</p></div>
+  <div id="error" class="card" hidden>
+    <p>Gemma couldn't read that Snap.</p>
+    <button id="retry">Try again</button>
+  </div>
+  <div id="title" class="card" hidden><h1 id="level-name"></h1></div>
   <script type="module" src="./main.ts"></script>
 </body>
 </html>
