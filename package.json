@@ -3,6 +3,10 @@
   "type": "module",
   "scripts": {
     "start": "bun server.js",
-    "test": "bun test"
+    "test": "bun test test/",
+    "play": "bun harness/play.js"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
   }
 }
