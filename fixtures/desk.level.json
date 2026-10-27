@@ -1,12 +1,155 @@
 {
-  "name": "PLACEHOLDER (hand-written, replaced by ticket 01)",
+  "name": "The IT Lab Gauntlet",
   "props": [
-    { "label": "desk", "role": "platform", "box": [0.04, 0.4, 0.84, 1], "layer": 1, "surface": [[0.04, 0.43], [0.72, 0.62]] },
-    { "label": "bags", "role": "platform", "box": [0.05, 0.2, 0.22, 0.42], "layer": 0, "surface": [[0.05, 0.22], [0.22, 0.22]] },
-    { "label": "monitor", "role": "platform", "box": [0.3, 0.17, 0.56, 0.76], "layer": 2, "surface": [[0.3, 0.17], [0.56, 0.24]] },
-    { "label": "laptop", "role": "platform", "box": [0.55, 0.4, 0.8, 0.77], "layer": 2, "surface": [[0.56, 0.41], [0.67, 0.41]] },
-    { "label": "water bottle", "role": "hazard", "box": [0.34, 0.35, 0.43, 0.93], "layer": 3 },
-    { "label": "mouse", "role": "coin", "box": [0.5, 0.59, 0.56, 0.64], "layer": 2 },
-    { "label": "jug", "role": "exit", "box": [0.24, 0.3, 0.28, 0.41], "layer": 0 }
+    {
+      "label": "wooden desk",
+      "role": "platform",
+      "box": [
+        0.079,
+        0.421,
+        0.842,
+        0.994
+      ],
+      "layer": 2,
+      "surface": [
+        [
+          0.079,
+          0.421
+        ],
+        [
+          0.842,
+          0.421
+        ]
+      ]
+    },
+    {
+      "label": "monitor",
+      "role": "platform",
+      "box": [
+        0.297,
+        0.163,
+        0.565,
+        0.758
+      ],
+      "layer": 3,
+      "surface": [
+        [
+          0.297,
+          0.163
+        ],
+        [
+          0.565,
+          0.163
+        ]
+      ]
+    },
+    {
+      "label": "laptop",
+      "role": "platform",
+      "box": [
+        0.556,
+        0.403,
+        0.802,
+        0.77
+      ],
+      "layer": 3,
+      "surface": [
+        [
+          0.556,
+          0.403
+        ],
+        [
+          0.802,
+          0.403
+        ]
+      ]
+    },
+    {
+      "label": "water bottle",
+      "role": "hazard",
+      "box": [
+        0.345,
+        0.35,
+        0.433,
+        0.93
+      ],
+      "layer": 4
+    },
+    {
+      "label": "mouse",
+      "role": "coin",
+      "box": [
+        0.509,
+        0.585,
+        0.561,
+        0.64
+      ],
+      "layer": 4
+    },
+    {
+      "label": "backpack",
+      "role": "bouncy",
+      "box": [
+        0.049,
+        0.195,
+        0.164,
+        0.423
+      ],
+      "layer": 3
+    },
+    {
+      "label": "blue cup",
+      "role": "coin",
+      "box": [
+        0.239,
+        0.316,
+        0.284,
+        0.418
+      ],
+      "layer": 3
+    },
+    {
+      "label": "black backpack",
+      "role": "hazard",
+      "box": [
+        0.151,
+        0.205,
+        0.217,
+        0.418
+      ],
+      "layer": 3
+    },
+    {
+      "label": "laptop",
+      "role": "platform",
+      "box": [
+        0.756,
+        0.391,
+        0.83,
+        0.514
+      ],
+      "layer": 2,
+      "surface": [
+        [
+          0.756,
+          0.391
+        ],
+        [
+          0.83,
+          0.391
+        ]
+      ]
+    },
+    {
+      "label": "exit door",
+      "role": "exit",
+      "box": [
+        0.667,
+        0,
+        0.756,
+        0.365
+      ],
+      "layer": 1
+    }
   ]
 }

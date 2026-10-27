@@ -1,0 +1,10 @@
+{
+  "props": [
+    { "label": "bottle", "match": "bottle", "box": [0.344, 0.349, 0.428, 0.93] },
+    { "label": "monitor", "match": "monitor|screen", "box": [0.298, 0.165, 0.562, 0.761] },
+    { "label": "laptop", "match": "laptop", "box": [0.552, 0.406, 0.799, 0.772] },
+    { "label": "bags", "match": "bag|backpack", "box": [0.047, 0.201, 0.215, 0.419] },
+    { "label": "mouse", "match": "mouse", "box": [0.506, 0.586, 0.559, 0.641] },
+    { "label": "desk edge", "match": "desk|table", "surface": [[0.085, 0.7], [0.73, 0.78]] }
+  ]
+}

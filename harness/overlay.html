@@ -1,0 +1,63 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Level overlay</title>
+<style>body { margin: 0; background: #111; } canvas { display: block; }</style>
+<canvas></canvas>
+<script type="module">
+const params = new URLSearchParams(location.search);
+const snap = params.get("snap") ?? "/fixtures/desk.jpg";
+const level = await (await fetch(params.get("level") ?? "/fixtures/desk.level.json")).json();
+const truth = params.has("truth") ? await (await fetch(params.get("truth"))).json() : null;
+
+const image = new Image();
+image.src = snap;
+await image.decode();
+const canvas = document.querySelector("canvas");
+const { naturalWidth: w, naturalHeight: h } = image;
+canvas.width = w;
+canvas.height = h;
+const ctx = canvas.getContext("2d");
+ctx.drawImage(image, 0, 0);
+
+const colors = { platform: "#3f6", hazard: "#f33", coin: "#fd0", bouncy: "#f6f", wind: "#3cf", exit: "#fff" };
+
+if (params.has("grid")) {
+  ctx.strokeStyle = "rgba(255,255,255,0.35)";
+  ctx.fillStyle = "#fff";
+  ctx.font = "10px monospace";
+  for (let f = 0.05; f < 1; f += 0.05) {
+    ctx.beginPath(); ctx.moveTo(f * w, 0); ctx.lineTo(f * w, h); ctx.moveTo(0, f * h); ctx.lineTo(w, f * h); ctx.stroke();
+    ctx.fillText(f.toFixed(2), f * w + 2, 10);
+    ctx.fillText(f.toFixed(2), 2, f * h - 2);
+  }
+}
+
+const line = ([[ax, ay], [bx, by]], color, width) => {
+  ctx.strokeStyle = color; ctx.lineWidth = width;
+  ctx.beginPath(); ctx.moveTo(ax * w, ay * h); ctx.lineTo(bx * w, by * h); ctx.stroke();
+};
+
+for (const { label, role, box: [x0, y0, x1, y1], layer, surface, wind } of level.props) {
+  ctx.strokeStyle = colors[role]; ctx.lineWidth = 2;
+  ctx.strokeRect(x0 * w, y0 * h, (x1 - x0) * w, (y1 - y0) * h);
+  if (surface) line(surface, "#0f0", 5);
+  const tag = `${label} · ${role} · L${layer}${wind ? " · " + wind : ""}`;
+  ctx.font = "bold 13px sans-serif";
+  ctx.fillStyle = "rgba(0,0,0,0.7)";
+  ctx.fillRect(x0 * w, y0 * h, ctx.measureText(tag).width + 6, 17);
+  ctx.fillStyle = colors[role];
+  ctx.fillText(tag, x0 * w + 3, y0 * h + 13);
+}
+
+for (const { box, surface } of truth?.props ?? []) {
+  ctx.setLineDash([6, 4]);
+  if (box) { ctx.strokeStyle = "#f0f"; ctx.lineWidth = 2; ctx.strokeRect(box[0] * w, box[1] * h, (box[2] - box[0]) * w, (box[3] - box[1]) * h); }
+  if (surface) line(surface, "#f0f", 3);
+  ctx.setLineDash([]);
+}
+
+ctx.font = "bold 18px sans-serif";
+ctx.fillStyle = "#fff";
+ctx.fillText(level.name, 10, h - 12);
+document.title = "ready";
+</script>
