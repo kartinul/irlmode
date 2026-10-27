@@ -4,10 +4,10 @@
 
 **Blocked by:** 01, 02
 
-**Status:** ready-for-agent
+**Status:** resolved (camera deferred by user; ≤ 10 s unmet, see Comments)
 
 - [ ] Camera opens on phone via file input; photo resized in browser before upload
-- [ ] Local server serves the game and a level endpoint that calls Gemma
+- [x] Local server serves the game and a level endpoint that calls Gemma
 - [x] Gemma failure shows a friendly retry, never a blank screen
 - [x] Harness uploads the desk Snap, waits for the title card, plays to the exit; screenshots reviewed
 - [ ] Snap → playable in ≤ 10 s
@@ -20,3 +20,4 @@
 - Server `idleTimeout: 60` because Bun's 10 s default would cut a ~15 s Gemma call.
 - Tests: `test/server.test.ts` covers the endpoint with both fake modes.
 - **Not verified here (no network):** "Local server ... calls Gemma" and "≤ 10 s" need the live run (`bun run snap --live`). Real Gemma is ~15 s, so ≤ 10 s is likely unmet.
+- Live run (`bun run snap --live`): demo photo to playable in 18.0 s with "The Coding Lab Gauntlet"; Runner won; title and win screenshots reviewed. **≤ 10 s unmet**: Gemma itself takes 15-18 s.
