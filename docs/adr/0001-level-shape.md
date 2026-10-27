@@ -15,8 +15,9 @@ All coords are fractions of the Snap (0..1, origin top-left), so a Level works a
 ```
 
 - `box`: `[x0, y0, x1, y1]`
-- `role`: `platform | hazard | coin | bouncy | wind | exit` (exactly one `exit`)
-- `layer`: integer, higher = nearer the camera
+- `role`: `platform | hazard | coin | bouncy | wind | exit | decor` (exactly one `exit`; `decor` only hides the Runner)
+- `outline`: the Prop's silhouette polygon `[[x, y], ...]`; falls back to the `box` corners
+- `layer`: integer z-index, 0 = farthest, higher = nearer the camera
 - `surface` (platforms only): the standable edge, two points `[[x, y], [x, y]]` left to right; may slant
 - `wind` (wind only): `left | right | up | down`
 

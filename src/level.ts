@@ -1,10 +1,10 @@
 import type { Box, Level, Point, Prop, Role, Wind } from "./types.ts"
 
-const ROLES: Role[] = ["platform", "hazard", "coin", "bouncy", "wind", "exit"]
+const ROLES: Role[] = ["platform", "hazard", "coin", "bouncy", "wind", "exit", "decor"]
 const WINDS: Wind[] = ["left", "right", "up", "down"]
 
 // Raw Gemma JSON: untrusted, validated field by field below.
-type RawProp = { label?: unknown; role?: unknown; box?: unknown; layer?: unknown; surface?: unknown; wind?: unknown }
+type RawProp = { label?: unknown; role?: unknown; box?: unknown; layer?: unknown; surface?: unknown; wind?: unknown; outline?: unknown }
 
 const clamp = (n: number) => Math.min(1, Math.max(0, n))
 const isNumbers = (v: unknown, length: number): v is number[] =>
@@ -26,10 +26,21 @@ function toSurface(surface: unknown, [x0, y0, x1, y1]: Box): [Point, Point] {
   return a[0] <= b[0] ? [a, b] : [b, a]
 }
 
-function toProp({ label, role, box, layer, surface, wind }: RawProp): Prop | null {
+function toOutline(outline: unknown, [x0, y0, x1, y1]: Box): Point[] {
+  const valid = Array.isArray(outline) && outline.length >= 3 && outline.every((point) => isNumbers(point, 2))
+  return valid ? outline.map((point) => point.map(clamp) as Point) : [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
+}
+
+function toProp({ label, role, box, layer, surface, wind, outline }: RawProp): Prop | null {
   const cleanBox = toBox(box)
   if (!ROLES.includes(role as Role) || !cleanBox) return null
-  const prop: Prop = { label: String(label ?? role), role: role as Role, box: cleanBox, layer: Math.round(Number(layer)) || 0 }
+  const prop: Prop = {
+    label: String(label ?? role),
+    role: role as Role,
+    box: cleanBox,
+    layer: Math.round(Number(layer)) || 0,
+    outline: toOutline(outline, cleanBox),
+  }
   if (role === "platform") prop.surface = toSurface(surface, cleanBox)
   if (role === "wind") prop.wind = WINDS.includes(wind as Wind) ? (wind as Wind) : "down"
   return prop
@@ -37,8 +48,8 @@ function toProp({ label, role, box, layer, surface, wind }: RawProp): Prop | nul
 
 const thousandths = (v: unknown) => (isNumbers(v, (v as unknown[]).length) ? v.map((n) => n / 1000) : v)
 const boxFrom = (box: unknown) => { const b = thousandths(box); return isNumbers(b, 4) ? [b[1], b[0], b[3], b[2]] : b }
-const surfaceFrom = (surface: unknown) =>
-  Array.isArray(surface) ? surface.map((point) => { const p = thousandths(point); return Array.isArray(p) ? p.toReversed() : p }) : surface
+const pointsFrom = (points: unknown) =>
+  Array.isArray(points) ? points.map((point) => { const p = thousandths(point); return Array.isArray(p) ? p.toReversed() : p }) : points
 
 const withRole = (prop: Prop, role: Role) => toProp({ ...prop, role })!
 
@@ -55,21 +66,25 @@ function oneExit(props: Prop[]): Prop[] {
 const MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent"
 
 const PROMPT = `This photo becomes a 2D platformer level; its real objects are the terrain.
-Find the main objects and reply with JSON only:
-{"name": "<funny level title>", "props": [{"label": "<plain words>", "role": "platform|hazard|coin|bouncy|wind|exit", "box_2d": [y0, x0, y1, x1], "layer": <int, higher = nearer camera>, "surface": [[y, x], [y, x]], "wind": "left|right|up|down"}]}
+List EVERY distinct visible object, big or small (furniture, screens, bags, bottles, people, chairs, lights, doors, windows...), and reply with JSON only:
+{"name": "<simple title in lowercase>", "props": [{"label": "<plain words>", "role": "platform|hazard|coin|bouncy|wind|exit|decor", "box_2d": [y0, x0, y1, x1], "outline": [[y, x], ...], "layer": <int>, "surface": [[y, x], [y, x]], "wind": "left|right|up|down"}]}
 Coords are integers 0..1000, origin top-left, y before x. box_2d is the tight box around the whole object.
+outline is a polygon of 8 to 16 points tracing the object's visible silhouette, clockwise.
+layer is the z-index: 0 = farthest from the camera (back wall), counting up for each step nearer; things at the same depth share a layer.
 surface (platforms only) is the edge a tiny figure would stand on: the front edge of the object's top face as seen in the photo, left point then right point; it may slant.
-wind only for wind props. Exactly one exit. Use big flat things as platforms.
-Include small objects too (mouse, cups, bags): make them coins or hazards.`
+wind only for wind props. Exactly one exit, a small reachable object. Use big flat things as platforms, small objects as coins or hazards.
+Anything that is not part of the game (people, walls, background clutter) is decor.`
 
 type GeminiReply = { candidates: { content: { parts: { text: string; thought?: boolean }[] } }[] }
 
 export async function readLevel(jpegBytes: ArrayBuffer): Promise<Level> {
   const body = {
-    contents: [{ parts: [
-      { inline_data: { mime_type: "image/jpeg", data: Buffer.from(jpegBytes).toString("base64") } },
-      { text: PROMPT },
-    ] }],
+    contents: [{
+      parts: [
+        { inline_data: { mime_type: "image/jpeg", data: Buffer.from(jpegBytes).toString("base64") } },
+        { text: PROMPT },
+      ]
+    }],
     generationConfig: { thinkingConfig: { thinkingLevel: "minimal" } },
   }
   const res = await fetch(MODEL_URL, {
@@ -85,7 +100,7 @@ export async function readLevel(jpegBytes: ArrayBuffer): Promise<Level> {
 export function parseLevel(reply: string): Level {
   const level = JSON.parse(reply.slice(reply.indexOf("{"), reply.lastIndexOf("}") + 1))
   const props = (Array.isArray(level.props) ? (level.props as Record<string, unknown>[]) : [])
-    .map((prop) => toProp({ ...prop, box: boxFrom(prop.box_2d), surface: surfaceFrom(prop.surface) }))
+    .map((prop) => toProp({ ...prop, box: boxFrom(prop.box_2d), surface: pointsFrom(prop.surface), outline: pointsFrom(prop.outline) }))
     .filter((prop) => prop !== null)
   return { name: String(level.name ?? "Untitled Level"), props: oneExit(props) }
 }

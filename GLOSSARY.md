@@ -34,8 +34,12 @@ _Avoid_: ledge, top, floor
 A Prop's z-index in the Snap: how close it is to the camera relative to the other Props. Nearer Layers win where Props overlap.
 _Avoid_: depth, z, distance
 
+**Outline**:
+The polygon tracing a Prop's real silhouette in the Snap; nearer Props hide the Runner exactly inside it.
+_Avoid_: mask, shape
+
 **Role**:
-How a Prop behaves in the game: platform, hazard, coin, bouncy, wind or exit.
+How a Prop behaves in the game: platform, hazard, coin, bouncy, wind, exit, or decor (only hides the Runner).
 _Avoid_: type, kind, category
 
 **Runner**:

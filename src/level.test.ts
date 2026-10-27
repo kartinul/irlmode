@@ -11,12 +11,12 @@ const raw = ({ box, surface, ...prop }: Fake) => ({
 })
 
 test("parses a fenced reply into a Level", () => {
-  const reply = '```json\n{"name":"Desk","props":[{"label":"desk","role":"platform","box_2d":[400,0,1000,800],"layer":1,"surface":[[420,0],[500,800]]},{"label":"jug","role":"exit","box_2d":[300,200,400,300],"layer":0}]}\n```'
+  const reply = '```json\n{"name":"Desk","props":[{"label":"desk","role":"platform","box_2d":[400,0,1000,800],"layer":1,"surface":[[420,0],[500,800]],"outline":[[400,0],[400,800],[1000,400]]},{"label":"jug","role":"exit","box_2d":[300,200,400,300],"layer":0}]}\n```'
   expect(parseLevel(reply)).toEqual({
     name: "Desk",
     props: [
-      { label: "desk", role: "platform", box: [0, 0.4, 0.8, 1], layer: 1, surface: [[0, 0.42], [0.8, 0.5]] },
-      { label: "jug", role: "exit", box: [0.2, 0.3, 0.3, 0.4], layer: 0 },
+      { label: "desk", role: "platform", box: [0, 0.4, 0.8, 1], layer: 1, surface: [[0, 0.42], [0.8, 0.5]], outline: [[0, 0.4], [0.8, 0.4], [0.4, 1]] },
+      { label: "jug", role: "exit", box: [0.2, 0.3, 0.3, 0.4], layer: 0, outline: [[0.2, 0.3], [0.3, 0.3], [0.3, 0.4], [0.2, 0.4]] },
     ],
   })
 })
@@ -30,14 +30,14 @@ test("drops Props with junk Roles or unusable Boxes", () => {
     { label: "nothing", role: "coin", box: [0.5, 0.5, 0.5, 0.9], layer: 0 },
     { label: "broken", role: "coin", box: "oops", layer: 0 },
   )
-  expect<unknown>(parseLevel(reply).props).toEqual([exit])
+  expect<unknown>(parseLevel(reply).props).toMatchObject([exit])
 })
 
 test("clamps out-of-range coords and orders Box corners", () => {
   const reply = level(
     { label: "desk", role: "platform", box: [-0.1, 1.2, 0.9, 0.4], layer: 1, surface: [[1.3, 0.5], [-2, 0.4]] },
   )
-  expect(parseLevel(reply).props[0]).toEqual(
+  expect(parseLevel(reply).props[0]).toMatchObject(
     { label: "desk", role: "platform", box: [0, 0.4, 0.9, 1], layer: 1, surface: [[0, 0.4], [1, 0.5]] },
   )
 })
@@ -76,4 +76,13 @@ test("a Surface far below its Box top falls back to the Box top", () => {
     { label: "monitor", role: "platform", box: [0.3, 0.2, 0.6, 0.8], layer: 1, surface: [[0.3, 0.2], [0.6, 0.8]] },
   )
   expect(parseLevel(reply).props[0].surface).toEqual([[0.3, 0.2], [0.6, 0.2]])
+})
+
+test("decor Props are kept, and junk outlines fall back to the Box", () => {
+  const reply = level({ label: "person", role: "decor", box: [0.8, 0, 1, 1], layer: 5 })
+  const person = JSON.parse(reply)
+  person.props[0].outline = [[0, 800], "oops"]
+  expect(parseLevel(JSON.stringify(person)).props[0]).toMatchObject(
+    { role: "decor", layer: 5, outline: [[0.8, 0], [1, 0], [1, 1], [0.8, 1]] },
+  )
 })
